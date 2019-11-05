@@ -12,7 +12,7 @@ void PWM_Init(void)
     TCCR1 = 1 << CTC1 | //clear on match with OCR1C
 	    1 << PWM1A | // set output PB1
 	    1 << COM1A0 | // set output PB1
-            6 << CS10;  //set prescaling to clk/16
+            2 << CS10;  //set prescaling to clk/16
 }
 
 int main(int argc, char** argv) {
