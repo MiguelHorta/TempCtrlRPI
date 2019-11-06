@@ -20,7 +20,7 @@ set(PROG_TYPE usbasp)
 # http://eleccelerator.com/fusecalc/fusecalc.php?chip=atmega328p
 set(E_FUSE 0xff)
 set(H_FUSE 0xdf)
-set(L_FUSE 0x62)
+set(L_FUSE 0xE2)
 set(LOCK_BIT 0xff)
 
 
@@ -40,13 +40,12 @@ set(CMAKE_EXE_LINKER_FLAGS -mmcu=${MCU})
 
 add_compile_options(
     -mmcu=${MCU} # MCU
-    -std=gnu99 # C99 standard
+    -std=c++14
     -Os # optimize
     -Wall # enable warnings
     -Wno-main
     -Wundef
-    -pedantic
-    -Wstrict-prototypes
+    -Wno-pedantic
     -Werror
     -Wfatal-errors
     -Wl,--relax,--gc-sections
@@ -61,7 +60,9 @@ add_compile_options(
     -fno-split-wide-types
     -fno-tree-scev-cprop
 )
-file(GLOB SRC_FILES "*.c") # Load all files in src folder
+
+include_directories(include)
+file(GLOB SRC_FILES include/*.h src/*.cpp) # Load all files in src folder
 
 # Create one target
 add_executable(${PRODUCT_NAME} ${SRC_FILES})
