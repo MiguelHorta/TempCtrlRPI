@@ -62,7 +62,7 @@ add_compile_options(
 )
 
 include_directories(include)
-file(GLOB SRC_FILES include/*.h src/*.cpp) # Load all files in src folder
+file(GLOB SRC_FILES include/*.h *.cpp) # Load all files in src folder
 
 # Create one target
 add_executable(${PRODUCT_NAME} ${SRC_FILES})
