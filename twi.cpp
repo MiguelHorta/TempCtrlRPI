@@ -796,10 +796,15 @@ ISR( USI_OVERFLOW_VECTOR )
 
 } // end ISR( USI_OVERFLOW_VECTOR )
 
-
+extern volatile uint16_t tach_count;
 // Interrupt Routine, triggered when SDA pin changes; for detecting Stop condition
 ISR( PCINT0_vect )
 {
+  if (PINB & (1 << PB5)) {
+      tach_count++;
+      return;
+  }
+
   if((PIN_USI & (1 << PIN_USI_SDA)) && (PIN_USI & ( 1 << PIN_USI_SCL ))){
     // stop condition occured
     _delay_us(7);

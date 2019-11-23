@@ -41,7 +41,7 @@ set(CMAKE_EXE_LINKER_FLAGS -mmcu=${MCU})
 add_compile_options(
     -mmcu=${MCU} # MCU
     -std=c++14
-    -Os # optimize
+    -O2 # optimize
     -Wall # enable warnings
     -Wno-main
     -Wundef
