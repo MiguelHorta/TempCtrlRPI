@@ -5,6 +5,17 @@
 
 #include "rpi_temp.h"
 
+
+// Current pinout
+// 1 | Reset (maybe tach)
+// 2 | PB3 - Resistor 1
+// 3 | PB4 - Resistor 2
+// 4 | GND
+// 5 | SDA - I2C
+// 6 | PB6 - PWM 5V fan
+// 7 | SCL - I2C
+// 8 | VCC 
+
 const static uint8_t t85_addr = 0x16;
 static uint8_t last_selected_reg = 0;
 /*extern */volatile uint16_t tach_count = 0;
@@ -19,11 +30,6 @@ struct fan_desc {
   target_mode_t target_mode = DUTY_CYCLE_MODE;
 } fan;
 
-struct sensor_temperature_desc {
-  uint8_t raw_read = ~0;
-  uint8_t temperature = ~0;
-} temp1, temp2;
-
 struct fan_pid {
   const uint16_t step = 25000;
   volatile uint16_t count = 0;
@@ -31,6 +37,34 @@ struct fan_pid {
   const uint8_t ki = 5;
   uint16_t acc_err;
 } pid;
+
+struct sys_fan_desc {
+  const uint8_t RES0_VAL = 10; // *100
+  const uint8_t RES1_VAL = 15; // *100
+  const uint8_t RES2_VAL = 27; // *100
+  sys_fan_level_t level = FAN_HIGHEST;
+} sys_fan;
+
+void setSysFanLevel(sys_fan_level_t lvl) {
+  switch (lvl) {
+  case FAN_IDLE:
+    PORTB &= ~(1 << PB3 | 1 << PB4);
+    break;
+  case FAN_MEDIUM:
+    PORTB |= (1 << PB4);
+    PORTB &= ~(1 << PB3);
+    break;
+  case FAN_HIGH:
+    PORTB |= (1 << PB3);
+    PORTB &= ~(1 << PB4);
+    break;
+  case FAN_HIGHEST:
+    PORTB |= (1 << PB3) | (1 << PB4);
+    break;
+  default:
+    break;
+  }
+}
 
 void PWM_Init(void) {
   // Set Pin6/PB1 to output
@@ -77,6 +111,10 @@ void onI2CReceive(int howMany) {
     fan.duty_cycle = write;
     setFanDTC(fan.duty_cycle);
     break;
+  case SYS_FAN_LEVEL:
+    sys_fan.level = (sys_fan_level_t)write;
+    setSysFanLevel(sys_fan.level);
+    break;
   default:
     break;
   }
@@ -94,21 +132,12 @@ void onI2CRequest(void) {
   case CONTROL_MODE:
     TinyWire.send(fan.target_mode);
     break;
-  case TEMP_1:
-    TinyWire.send(temp1.temperature);
-    break;
-  case TEMP_2:
-    TinyWire.send(temp2.temperature);
+  case SYS_FAN_LEVEL:
+    TinyWire.send((uint8_t)sys_fan.level);
     break;
   case RAW_RPM:
     TinyWire.send((fan.raw_rpm >> 8) & 0xFF);
     TinyWire.send(fan.raw_rpm & 0xFF);
-    break;
-  case RAW_TEMP_1:
-    TinyWire.send(temp1.raw_read);
-    break;
-  case RAW_TEMP_2:
-    TinyWire.send(temp2.raw_read);
     break;
   default:
     break;
@@ -131,9 +160,14 @@ int main(int argc, char **argv) {
   cli();
 
   PWM_Init();
-  /* Enable tach interrupt */
+  /* Enable tach interrupt 
   GIMSK |= (1 << PCIE);
   PCMSK |= (1 << PCINT5);
+  */
+
+  DDRB |= (1<<DDB3)|(1<<DDB4);
+  PORTB |= (1<<PB3)|(1<<PB4);
+  setSysFanLevel(FAN_HIGHEST);;
 
   TinyWire.begin(t85_addr);
   // sets callback for the event of a slave receive
@@ -142,14 +176,14 @@ int main(int argc, char **argv) {
   sei();
 
   while (1) {
-    if (pid.count >= pid.step) {
-      fan.raw_rpm = (tach_count >> 1);
-      if (fan.target_mode == RPM_MODE) {
-          updatePID();
-      }
-      tach_count = 0;
-      pid.count = 0;
-    }
+    // if (pid.count >= pid.step) {
+    //   fan.raw_rpm = (tach_count >> 1);
+    //   if (fan.target_mode == RPM_MODE) {
+    //       updatePID();
+    //   }
+    //   tach_count = 0;
+    //   pid.count = 0;
+    // }
   }
 
   return 0;

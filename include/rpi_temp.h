@@ -7,16 +7,20 @@ enum regs {
     RPM,                // R/W
     DUTY_CYCLE,         // R/W
     CONTROL_MODE,       // R
-    TEMP_1,             // R
-    TEMP_2,             // R
+    SYS_FAN_LEVEL,       // R/W
     RAW_RPM,            // R
-    RAW_TEMP_1,         // R
-    RAW_TEMP_2,         // R
 };
 
 typedef enum target_mode {
     RPM_MODE = 0,
     DUTY_CYCLE_MODE = 1,
 } target_mode_t;
+
+typedef enum sys_fan_level {
+    FAN_IDLE,
+    FAN_MEDIUM,
+    FAN_HIGH,
+    FAN_HIGHEST,
+} sys_fan_level_t;
 
 #endif /* RPI_TEMP_H */
